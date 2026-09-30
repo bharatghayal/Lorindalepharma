@@ -1,0 +1,6 @@
+{
+  "name": "Lorindale Pharma",
+  "description": "Leading healthcare and pharmaceutical company in Myanmar, delivering innovative, affordable, and high-quality pharmaceutical, medical, cosmetic, and healthcare products.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
