@@ -245,6 +245,11 @@ export default function Products({ lang, selectedCategory, setSelectedCategory }
                         aria-label={prod.name[lang]}
                         className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          target.onerror = null;
+                          target.src = "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600";
+                        }}
                       />
 
                       {/* Bottom Floating Product Name Overlay Banner directly on image */}
@@ -368,6 +373,11 @@ export default function Products({ lang, selectedCategory, setSelectedCategory }
                     aria-label={activeProduct.name[lang]}
                     className="max-h-full max-w-full object-contain drop-shadow-md"
                     referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      target.onerror = null;
+                      target.src = "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600";
+                    }}
                   />
                   {/* Floating product identifier overlay in modal */}
                   <div className="absolute bottom-3 left-4 right-4 z-10 backdrop-blur-md bg-slate-900/85 border border-white/20 text-white px-4 py-2 rounded-xl flex items-center justify-between shadow-lg">

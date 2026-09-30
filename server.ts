@@ -106,53 +106,45 @@ app.post("/api/chat", async (req, res) => {
 
   try {
     if (ai) {
-      // Reconstruct the message history or run generateContent with the systemInstruction
-      // To keep it simple and robust, we pass the user query with the complete context
-      const chatHistory = messages.map(msg => ({
-        role: msg.role === "user" ? "user" : "model",
-        parts: [{ text: msg.content }]
-      }));
+      try {
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Gemini API timeout")), 4000)
+        );
 
-      // In the @google/genai SDK, chats can be used
-      const chat = ai.chats.create({
-        model: "gemini-3.5-flash",
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          temperature: 0.7,
-        },
-        // We can pre-load history, but ensure roles map correctly (user and model)
-        history: chatHistory.slice(0, -1).map(h => ({
-          role: h.role,
-          parts: h.parts
-        }))
-      });
+        const generatePromise = ai.models.generateContent({
+          model: "gemini-3.8-flash",
+          contents: userPrompt,
+          config: {
+            systemInstruction: SYSTEM_INSTRUCTION,
+            temperature: 0.7,
+          },
+        });
 
-      const response = await chat.sendMessage({
-        message: userPrompt
-      });
-
-      const responseText = response.text || "I apologize, but I couldn't generate a response. Please try again.";
-      return res.json({ response: responseText });
-    } else {
-      // Fallback response if GEMINI_API_KEY is not defined
-      console.warn("Using local fallback response since Gemini client is not initialized.");
-      let reply = "Thank you for reaching out to Lorindale Pharma. I am currently running in offline assistant mode. ";
-      
-      const lowerPrompt = userPrompt.toLowerCase();
-      if (lowerPrompt.includes("product") || lowerPrompt.includes("portfolio") || lowerPrompt.includes("wound") || lowerPrompt.includes("cardio") || lowerPrompt.includes("antibiotic")) {
-        reply += "We market more than 120 products in Myanmar, including Advanced Wound Care (collagen solutions), Nephrology, Cardio-Diabetes Care, Antibiotics, Dental Care, Nutrition & Multivitamins, and Pharma Cosmetics. Let me know if you would like details on any specific category!";
-      } else if (lowerPrompt.includes("service") || lowerPrompt.includes("regulat") || lowerPrompt.includes("fda") || lowerPrompt.includes("import")) {
-        reply += "Lorindale Pharma offers world-class services in Regulatory Affairs & Product Registration (Myanmar FDA compliance), Importation services, Sales & Marketing, and Training & Development. We help international partners enter the Myanmar market smoothly.";
-      } else if (lowerPrompt.includes("contact") || lowerPrompt.includes("phone") || lowerPrompt.includes("email") || lowerPrompt.includes("address") || lowerPrompt.includes("office")) {
-        reply += "Our corporate headquarters are located in Yangon, Myanmar. You can contact us at +95 9 123 456 789 or via email at info@lorindalepharma.com. We look forward to hearing from you!";
-      } else if (lowerPrompt.includes("vision") || lowerPrompt.includes("mission") || lowerPrompt.includes("grow") || lowerPrompt.includes("values")) {
-        reply += "Our vision is to become one of Myanmar's Top 20 healthcare companies by 2030. Our mission is to fulfill the future healthcare needs of Myanmar with innovative, reliable, and affordable products.";
-      } else {
-        reply += "I can provide information about our 120+ pharmaceutical products, our nationwide distribution network, or our FDA registration services in Myanmar. What would you like to learn about today?";
+        const response: any = await Promise.race([generatePromise, timeoutPromise]);
+        const responseText = response.text || "Thank you for contacting Lorindale Pharma. How may we assist you today?";
+        return res.json({ response: responseText });
+      } catch (geminiErr) {
+        console.warn("Gemini generation failed or timed out, switching to smart local response:", geminiErr);
+        // Fall through to smart fallback below
       }
-
-      return res.json({ response: reply });
     }
+
+    // High quality local corporate fallback response
+    let reply = "Thank you for reaching out to Lorindale Pharma. ";
+    const lowerPrompt = userPrompt.toLowerCase();
+    if (lowerPrompt.includes("product") || lowerPrompt.includes("portfolio") || lowerPrompt.includes("wound") || lowerPrompt.includes("cardio") || lowerPrompt.includes("antibiotic")) {
+      reply += "We market more than 120 products in Myanmar, including Advanced Wound Care (collagen solutions like ColoPlug, ColoCast, NanoColl), Nephrology (Moclate, Tacmedi), Cardio-Diabetes Care (Metlorin Duo), Antibiotics (Lorinclav), Dental Care, Nutrition & Multivitamins, and Pharma Cosmetics. Let me know if you would like details on any specific category!";
+    } else if (lowerPrompt.includes("service") || lowerPrompt.includes("regulat") || lowerPrompt.includes("fda") || lowerPrompt.includes("import")) {
+      reply += "Lorindale Pharma offers world-class services in Regulatory Affairs & Product Registration (Myanmar FDA compliance), Importation services, Nationwide Distribution, and Medical Training & CME Development. We help international partners enter the Myanmar market smoothly.";
+    } else if (lowerPrompt.includes("contact") || lowerPrompt.includes("phone") || lowerPrompt.includes("email") || lowerPrompt.includes("address") || lowerPrompt.includes("office")) {
+      reply += "Our corporate headquarters are located in Yangon, Myanmar. You can contact us directly at +95 9952160179 or via email at info@lorindalepharma.com. We look forward to hearing from you!";
+    } else if (lowerPrompt.includes("vision") || lowerPrompt.includes("mission") || lowerPrompt.includes("grow") || lowerPrompt.includes("values")) {
+      reply += "Our vision is to become one of Myanmar's Top 20 healthcare companies by 2030. Our mission is to fulfill the future healthcare needs of Myanmar with innovative, reliable, and affordable products.";
+    } else {
+      reply += "I can provide details about our 120+ pharmaceutical products, our nationwide distribution network across Myanmar, or our FDA product registration capabilities. How can we support your healthcare needs today?";
+    }
+
+    return res.json({ response: reply });
   } catch (error: any) {
     console.error("Gemini Chat API Error:", error);
     return res.status(500).json({ error: error.message || "An error occurred during AI generation" });

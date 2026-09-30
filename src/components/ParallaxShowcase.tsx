@@ -2,6 +2,8 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { FlaskConical, Sparkles, Shield, ArrowRight, Layers, HelpCircle, Activity, Globe } from "lucide-react";
 import { Language } from "../types";
+// @ts-ignore
+import nanoCollModel from "../assets/images/regenerated_image_1782288644734.png";
 
 interface ParallaxShowcaseProps {
   lang: Language;
@@ -163,7 +165,7 @@ export default function ParallaxShowcase({ lang }: ParallaxShowcaseProps) {
           {/* Glass-morphic scientific container */}
           <div className="relative w-[290px] h-[210px] md:w-[330px] md:h-[240px] rounded-3xl overflow-hidden shadow-2xl border border-white bg-white/20 p-2 backdrop-blur-xs">
             <img
-              src="/src/assets/images/regenerated_image_1782288644734.png"
+              src={nanoCollModel}
               alt="NanoColl Laboratory Presentation Model"
               className="w-full h-full object-cover rounded-2xl"
               referrerPolicy="no-referrer"
